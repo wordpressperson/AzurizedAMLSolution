@@ -1,0 +1,274 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ingestion
+  namespace: aml-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ingestion
+  template:
+    metadata:
+      labels:
+        app: ingestion
+    spec:
+      containers:
+      - name: ingestion
+        image: amlacrayo.azurecr.io/ingestion:v1
+        ports:
+        - containerPort: 8001
+        env:
+        - name: SERVICE_BUS_CONNECTION_STR
+          valueFrom:
+            secretKeyRef:
+              name: service-bus-secret
+              key: connection-string
+        - name: LOG_LEVEL
+          value: "INFO"
+      imagePullSecrets:
+      - name: acr-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ingestion
+  namespace: aml-system
+spec:
+  selector:
+    app: ingestion
+  ports:
+    - port: 8001
+      targetPort: 8001
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: feature-engine
+  namespace: aml-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: feature-engine
+  template:
+    metadata:
+      labels:
+        app: feature-engine
+    spec:
+      containers:
+      - name: feature-engine
+        image: amlacrayo.azurecr.io/feature-engine:v1
+        ports:
+        - containerPort: 8002
+        env:
+        - name: SERVICE_BUS_CONNECTION_STR
+          valueFrom:
+            secretKeyRef:
+              name: service-bus-secret
+              key: connection-string
+        - name: LOG_LEVEL
+          value: "INFO"
+      imagePullSecrets:
+      - name: acr-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: feature-engine
+  namespace: aml-system
+spec:
+  selector:
+    app: feature-engine
+  ports:
+    - port: 8002
+      targetPort: 8002
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: risk-scorer
+  namespace: aml-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: risk-scorer
+  template:
+    metadata:
+      labels:
+        app: risk-scorer
+    spec:
+      containers:
+      - name: risk-scorer
+        image: amlacrayo.azurecr.io/risk-scorer:v1
+        ports:
+        - containerPort: 8003
+        env:
+        - name: SERVICE_BUS_CONNECTION_STR
+          valueFrom:
+            secretKeyRef:
+              name: service-bus-secret
+              key: connection-string
+        - name: LOG_LEVEL
+          value: "INFO"
+      imagePullSecrets:
+      - name: acr-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: risk-scorer
+  namespace: aml-system
+spec:
+  selector:
+    app: risk-scorer
+  ports:
+    - port: 8003
+      targetPort: 8003
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: graph-analysis
+  namespace: aml-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: graph-analysis
+  template:
+    metadata:
+      labels:
+        app: graph-analysis
+    spec:
+      containers:
+      - name: graph-analysis
+        image: amlacrayo.azurecr.io/graph-analysis:v1
+        ports:
+        - containerPort: 8004
+        env:
+        - name: LOG_LEVEL
+          value: "INFO"
+      imagePullSecrets:
+      - name: acr-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: graph-analysis
+  namespace: aml-system
+spec:
+  selector:
+    app: graph-analysis
+  ports:
+    - port: 8004
+      targetPort: 8004
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alert-manager
+  namespace: aml-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alert-manager
+  template:
+    metadata:
+      labels:
+        app: alert-manager
+    spec:
+      containers:
+      - name: alert-manager
+        image: amlacrayo.azurecr.io/alert-manager:v1
+        ports:
+        - containerPort: 8005
+        env:
+        - name: SERVICE_BUS_CONNECTION_STR
+          valueFrom:
+            secretKeyRef:
+              name: service-bus-secret
+              key: connection-string
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openai-secret
+              key: api-key
+        - name: LOG_LEVEL
+          value: "INFO"
+      imagePullSecrets:
+      - name: acr-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alert-manager
+  namespace: aml-system
+spec:
+  selector:
+    app: alert-manager
+  ports:
+    - port: 8005
+      targetPort: 8005
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  namespace: aml-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      containers:
+      - name: gateway
+        image: amlacrayo.azurecr.io/gateway:v1
+        ports:
+        - containerPort: 8000
+        env:
+        - name: INGESTION_SERVICE_URL
+          value: "http://ingestion:8001"
+        - name: ALERT_MANAGER_URL
+          value: "http://alert-manager:8005"
+        - name: JWT_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: jwt-secret
+              key: secret-key
+        - name: ALLOWED_ORIGINS
+          value: "https://*.streamlit.app,http://localhost:8501"
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openai-secret
+              key: api-key
+        - name: LOG_LEVEL
+          value: "INFO"
+      imagePullSecrets:
+      - name: acr-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+  namespace: aml-system
+spec:
+  selector:
+    app: gateway
+  ports:
+    - port: 8000
+      targetPort: 8000
+  type: LoadBalancer

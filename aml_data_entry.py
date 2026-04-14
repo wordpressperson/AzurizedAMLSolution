@@ -10,7 +10,7 @@ import os
 # Configuration
 # ----------------------------------------------------------------------
 GATEWAY_URL = st.secrets.get("API_BASE_URL", "http://20.87.96.47:8000")
-JWT_TOKEN = st.secrets.get("JWT_TOKEN", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhbmFseXN0QGJhbmsuY29tIiwicm9sZSI6ImFuYWx5c3QiLCJwZXJtaXNzaW9ucyI6WyJyZWFkOmFsZXJ0cyIsIndyaXRlOmFsZXJ0cyIsInJlYWQ6c2NvcmVzIiwiYWRtaW46c3lzdGVtIl0sImV4cCI6MTc5MDAwMDAwMCwiaWF0IjoxNzY5OTk2NDAwfQ.fXDjZ5vtiP-THP17HK4rbz13Z8-j0OBpxwIyyH-qFN0")
+JWT_TOKEN = st.secrets.get("JWT_TOKEN", "enter_jwt_token_here")
 HEADERS = {"Authorization": f"Bearer {JWT_TOKEN}"}
 
 st.set_page_config(page_title="AML Data Entry Portal", layout="wide")
